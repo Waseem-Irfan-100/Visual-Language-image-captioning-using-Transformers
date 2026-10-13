@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caching and checkpoints
+.ipynb_checkpoints/
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+weights/
+
+# Temporary and log files
+*.log
+*.tmp
+*.temp
+
+# Large redundant processed duplicate
+image_captioning_kaggle_processed.ipynb
+
+# Datasets
+data/
+datasets/
+coco/
+coco2017/
+annotations/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
