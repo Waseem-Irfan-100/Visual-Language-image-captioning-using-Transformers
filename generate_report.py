@@ -506,21 +506,21 @@ train_data = [
     ('9', '3.4786', '2.3011', '9.99',  '4.84e-05'),
     ('10', '3.4571', '2.2836', '9.81',  '2.22e-05'),
     ('11', '3.4418', '2.2775', '9.75',  '5.66e-06'),
-    ('12 ★', '3.4386', '2.2757', '9.73',  '0.00e+00'),
+    ('12 (Best)', '3.4386', '2.2757', '9.73',  '0.00e+00'),
 ]
 for ci, h in enumerate(train_headers):
     shade_cell(train_table.rows[0].cells[ci], 'E0E0E0')
     set_cell_text(train_table.rows[0].cells[ci], h, bold=True, size=9)
 for ri, row in enumerate(train_data, start=1):
     for ci, val in enumerate(row):
-        is_best = '★' in row[0]
+        is_best = '(Best)' in row[0]
         fill = 'E2EFDA' if is_best else ('F2F2F2' if ri % 2 == 0 else 'FFFFFF')
         shade_cell(train_table.rows[ri].cells[ci], fill)
         set_cell_text(train_table.rows[ri].cells[ci], val, size=9, bold=is_best)
 doc.add_paragraph()
 
 add_body(doc,
-    "★ Best model (lowest validation loss) saved at epoch 12. The gap between training and "
+    "Best model (lowest validation loss) saved at epoch 12. The gap between training and "
     "validation loss (≈1.16 at epoch 12) is attributable to label smoothing applied only "
     "during training, which inflates the reported training loss by approximately 0.1 × log(V) ≈ 1.04 "
     "nats. Adjusting for this, the effective training loss is comparable to the validation loss, "
@@ -550,7 +550,7 @@ res_data = [
     ('BLEU-4', '0.2970', '0.3070', '0.3225'),
     ('METEOR', '0.4831', '0.4869', '0.4897'),
     ('ROUGE-L', '0.5418', '0.5463', '0.5551'),
-    ('CIDEr', '0.9633', '1.0070', '1.0385 ★'),
+    ('CIDEr', '0.9633', '1.0070', '1.0385 (Best)'),
 ]
 for ci, h in enumerate(res_headers):
     shade_cell(res_table.rows[0].cells[ci], 'E0E0E0')

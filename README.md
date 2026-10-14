@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
-[![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Transformers-yellow)](https://huggingface.co/)
+[![HuggingFace](https://img.shields.io/badge/Hugging%20Face-Transformers-yellow)](https://huggingface.co/)
 [![Dataset](https://img.shields.io/badge/Dataset-MS%20COCO%202017-brightgreen)](https://cocodataset.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -10,7 +10,7 @@ An end-to-end, pure Vision-Language Transformer architecture for automated image
 
 ---
 
-## 👥 Project Team (Group 8)
+## Project Team (Group 8)
 
 | Name | Roll Number | Role |
 | :--- | :--- | :--- |
@@ -22,7 +22,7 @@ An end-to-end, pure Vision-Language Transformer architecture for automated image
 
 ---
 
-## 🌟 Key Highlights & Novelty
+## Key Highlights & Novelty
 
 - **Pure Transformer Pipeline:** Eliminates conventional CNN grid backbones (ResNet, VGG) and recurrent decoders (LSTM, GRU) in favor of an all-attention cross-modal pipeline.
 - **Vision Transformer Backbone:** Leverages `google/vit-base-patch16-224-in21k` providing 197 patch tokens with global self-attention receptive fields from the very first layer.
@@ -34,7 +34,7 @@ An end-to-end, pure Vision-Language Transformer architecture for automated image
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
                       Input Image (224 x 224 x 3)
@@ -93,7 +93,7 @@ An end-to-end, pure Vision-Language Transformer architecture for automated image
 
 ---
 
-## 📊 Experimental Results
+## Experimental Results
 
 Trained on full **MS COCO 2017** ($118{,}287$ training images, $5{,}000$ validation images) over 12 epochs on an NVIDIA Tesla T4 GPU ($\approx 208$ minutes total).
 
@@ -114,17 +114,17 @@ Trained on full **MS COCO 2017** ($118{,}287$ training images, $5{,}000$ validat
 
 ### Per-Epoch Training Convergence
 
-| Epoch | Train Loss | Val Loss | Val Perplexity | LR | Best Model |
+| Epoch | Train Loss | Val Loss | Val Perplexity | LR | Status |
 | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1 | 7.005 | 3.780 | 43.83 | $3.00 \times 10^{-4}$ | ⭐ |
-| 2 | 4.621 | 3.125 | 22.76 | $2.95 \times 10^{-4}$ | ⭐ |
-| 4 | 3.987 | 2.684 | 14.64 | $2.55 \times 10^{-4}$ | ⭐ |
-| 8 | 3.612 | 2.391 | 10.92 | $1.25 \times 10^{-4}$ | ⭐ |
-| 12 | **3.439** | **2.276** | **9.73** | $2.50 \times 10^{-6}$ | ⭐ (Optimal) |
+| 1 | 7.005 | 3.780 | 43.83 | $3.00 \times 10^{-4}$ | Training |
+| 2 | 4.621 | 3.125 | 22.76 | $2.95 \times 10^{-4}$ | Training |
+| 4 | 3.987 | 2.684 | 14.64 | $2.55 \times 10^{-4}$ | Training |
+| 8 | 3.612 | 2.391 | 10.92 | $1.25 \times 10^{-4}$ | Training |
+| 12 | **3.439** | **2.276** | **9.73** | $0.00$ | Best Model (Optimal) |
 
 ---
 
-## 🔍 Attention Interpretability
+## Attention Interpretability
 
 The custom decoder returns the cross-attention weight tensors across all 6 layers and 8 heads:
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
@@ -134,28 +134,31 @@ By extracting and reshaping the $196$ spatial token attention weights into a $14
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 Visual-Language-image-captioning-using-Transformers/
-├── Group8_ImageCaptioning_Report.docx  # Complete IEEE-style formal academic paper report
-├── MASTER_PROMPT.md                    # Single-source-of-truth project specification
-├── README.md                           # Comprehensive documentation & results
-├── build_notebook.py                   # Automated builder assembling modular python into notebook
-├── config.py                           # Central configuration & hyperparameters
-├── dataset.py                          # MS COCO PyTorch Dataset & DataLoader pipeline
-├── evaluate.py                         # Evaluation suite (BLEU-1..4, METEOR, ROUGE-L, CIDEr)
-├── generate_report.py                  # Script generating the formal DOCX report
-├── image_captioning_kaggle.ipynb       # Clean ready-to-run Kaggle notebook
-├── inference.py                        # Standalone inference & beam search routines
-├── model.py                            # ViT Encoder, Bridge, and Scratch Pre-LN Transformer Decoder
-├── notebook4be3309021.ipynb            # Fully executed Kaggle notebook with outputs & visualizations
-└── train.py                            # Modular training loop with AMP & cosine annealing
+├── Group8_ImageCaptioning_Report_Revised.docx # Formal academic paper report (Word)
+├── main.tex                                  # IEEE two-column paper source (LaTeX)
+├── Overleaf_Group8_ImageCaptioning.zip       # Complete Overleaf-ready project package
+├── MASTER_PROMPT.md                           # Single-source-of-truth project specification
+├── README.md                                  # Comprehensive documentation & results
+├── build_notebook.py                          # Automated builder assembling modular python into notebook
+├── config.py                                  # Central configuration & hyperparameters
+├── dataset.py                                 # MS COCO PyTorch Dataset & DataLoader pipeline
+├── evaluate.py                                # Evaluation suite (BLEU-1..4, METEOR, ROUGE-L, CIDEr)
+├── figures/                                   # Model architecture and experimental visualization figures
+├── generate_report.py                         # Script generating the formal report
+├── image_captioning_kaggle.ipynb              # Clean ready-to-run Kaggle notebook
+├── inference.py                               # Standalone inference & beam search routines
+├── model.py                                   # ViT Encoder, Bridge, and Scratch Pre-LN Transformer Decoder
+├── notebook4be3309021.ipynb                   # Fully executed Kaggle notebook with outputs & visualizations
+└── train.py                                   # Modular training loop with AMP & cosine annealing
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Option 1: Running on Kaggle (Recommended)
 
@@ -192,14 +195,14 @@ Visual-Language-image-captioning-using-Transformers/
 
 ---
 
-## 📄 Academic Report
+## Academic Report
 
 A complete IEEE-formatted research report has been prepared:
-- **Document:** [`Group8_ImageCaptioning_Report.docx`](Group8_ImageCaptioning_Report.docx)
+- **Document:** [`Group8_ImageCaptioning_Report_Revised.docx`](Group8_ImageCaptioning_Report_Revised.docx) (Word) and [`main.tex`](main.tex) (IEEE LaTeX)
 - **Sections:** Abstract, Literature Review, Methodology, System Architecture, Results & Discussions, Visualizations, Performance Comparison, Observations, and 23 IEEE References.
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
