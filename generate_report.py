@@ -112,13 +112,13 @@ title_p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
 title_p.paragraph_format.space_before = Pt(0)
 title_p.paragraph_format.space_after = Pt(6)
 tr = title_p.add_run("Vision-Language / Image Captioning with Transformers")
-set_font(tr, size=18, bold=True, color=(0, 51, 102))
+set_font(tr, size=18, bold=True, color=(0, 0, 0))
 
 # Group label
 grp_p = doc.add_paragraph()
 grp_p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
 grp_p.paragraph_format.space_after = Pt(2)
-gr = grp_p.add_run("Group 8  |  Deep Learning — B.Tech. (CSE), Semester VII")
+gr = grp_p.add_run("Group 8  |  Deep Learning - B.Tech. (CSE), Semester VII")
 set_font(gr, size=10, italic=True, color=(80, 80, 80))
 
 # Authors
@@ -159,11 +159,11 @@ ab_run = abs_body.add_run(
     "This paper presents a complete end-to-end image captioning system that bridges the fields of "
     "computer vision and natural language processing through the combined power of Vision Transformers "
     "(ViT) and an autoregressive Transformer decoder built entirely from scratch. Trained on the "
-    "MS COCO 2017 benchmark dataset — comprising 118,287 training images, each annotated with "
-    "approximately five human-written captions — the model learns to generate fluent, semantically "
+    "MS COCO 2017 benchmark dataset - comprising 118,287 training images, each annotated with "
+    "approximately five human-written captions - the model learns to generate fluent, semantically "
     "accurate descriptions of unseen images. The encoder leverages a pretrained ViT-B/16 that converts "
-    "each image into 196 patch feature vectors of dimension 768, while the decoder — a six-layer "
-    "Transformer with masked self-attention, cross-attention, and feed-forward sub-layers — generates "
+    "each image into 196 patch feature vectors of dimension 768, while the decoder - a six-layer "
+    "Transformer with masked self-attention, cross-attention, and feed-forward sub-layers - generates "
     "captions autoregressively using the BERT WordPiece vocabulary. Advanced training techniques "
     "including AdamW optimisation, cosine annealing with linear warm-up, label smoothing, mixed "
     "precision training (AMP), and weight tying are employed to maximise performance. Evaluation "
@@ -180,7 +180,7 @@ kw_p = doc.add_paragraph()
 kw_p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
 kw_p.paragraph_format.left_indent = Cm(0.5)
 kw_p.paragraph_format.space_after = Pt(8)
-kw_bold = kw_p.add_run("Keywords — ")
+kw_bold = kw_p.add_run("Keywords - ")
 set_font(kw_bold, size=10, bold=True, italic=True)
 kw_text = kw_p.add_run(
     "Image Captioning, Vision Transformer, Transformer Decoder, Attention Mechanism, "
@@ -193,10 +193,10 @@ add_section_rule(doc)
 # ═══════════════════════════════════════════════════════
 # I. INTRODUCTION
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "I.  INTRODUCTION", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "I.  INTRODUCTION", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_body(doc,
-    "Image captioning — the automatic generation of natural-language descriptions for images — "
+    "Image captioning - the automatic generation of natural-language descriptions for images - "
     "sits at the intersection of computer vision and natural language processing. It requires a system "
     "to understand the visual content of a scene and express that understanding in coherent, "
     "grammatically correct text. This capability is fundamental to a wide range of real-world "
@@ -237,7 +237,7 @@ add_body(doc,
 # ═══════════════════════════════════════════════════════
 # II. LITERATURE REVIEW
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "II.  LITERATURE REVIEW", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "II.  LITERATURE REVIEW", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_heading(doc, "A.  CNN-RNN Baseline Era", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
@@ -272,7 +272,7 @@ add_body(doc,
     "Dosovitskiy et al. (2020) demonstrated that pure Transformer architectures can match or "
     "exceed CNNs on image recognition when pre-trained on sufficiently large datasets. This "
     "inspired ViT-based captioning: Luo et al. (2021) combined CLIP visual features with "
-    "GPT-2 for training-free captioning, while Wang et al. (2022) introduced OFA — a unified "
+    "GPT-2 for training-free captioning, while Wang et al. (2022) introduced OFA - a unified "
     "sequence-to-sequence pre-trained model achieving COCO CIDEr scores above 1.5. Our work "
     "purposefully uses a smaller ViT-B/16 encoder with a decoder trained from scratch to "
     "demonstrate that even without large-scale multimodal pre-training, competitive performance "
@@ -294,7 +294,7 @@ data = [
 ]
 for ci, h in enumerate(headers):
     set_cell_text(lit_table.rows[0].cells[ci], h, bold=True, size=9)
-    shade_cell(lit_table.rows[0].cells[ci], 'BDD7EE')
+    shade_cell(lit_table.rows[0].cells[ci], 'E0E0E0')
 for ri, row_data in enumerate(data, start=1):
     for ci, val in enumerate(row_data):
         align = WD_ALIGN_PARAGRAPH.LEFT if ci > 0 else WD_ALIGN_PARAGRAPH.LEFT
@@ -306,7 +306,7 @@ doc.add_paragraph()
 # ═══════════════════════════════════════════════════════
 # III. METHODOLOGY
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "III.  METHODOLOGY", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "III.  METHODOLOGY", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_heading(doc, "A.  Dataset: MS COCO 2017", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
@@ -360,19 +360,19 @@ add_body(doc,
     "Pre-LayerNorm architecture:"
 )
 add_body(doc,
-    "    Sub-layer 1 — Masked Multi-Head Self-Attention (8 heads): each token attends only "
+    "    Sub-layer 1 - Masked Multi-Head Self-Attention (8 heads): each token attends only "
     "to itself and previous tokens via a causal (upper-triangular) Boolean mask, preventing "
     "information leakage from future positions during training."
 )
 add_body(doc,
-    "    Sub-layer 2 — Multi-Head Cross-Attention (8 heads): queries come from the self-attention "
+    "    Sub-layer 2 - Multi-Head Cross-Attention (8 heads): queries come from the self-attention "
     "output, while keys and values come from the encoder's patch features. This is the layer "
     "that grounds generated words in image regions. Attention weights of shape (batch, heads, "
-    "words, patches) are returned directly — without any PyTorch source modification — enabling "
+    "words, patches) are returned directly - without any PyTorch source modification - enabling "
     "heatmap visualisation."
 )
 add_body(doc,
-    "    Sub-layer 3 — Feed-Forward Network: two linear layers (768 → 2048 → 768) with GELU "
+    "    Sub-layer 3 - Feed-Forward Network: two linear layers (768 → 2048 → 768) with GELU "
     "activation and dropout(0.1). Residual connections with dropout wrap each sub-layer."
 )
 
@@ -395,8 +395,8 @@ arch_rows = [
     ('Total parameters', '~157 M (encoder frozen, not trained)'),
 ]
 for ri, (k, v) in enumerate(arch_rows):
-    shade_cell(arch_table.rows[ri].cells[0], 'BDD7EE' if ri == 0 else ('F2F2F2' if ri % 2 == 0 else 'FFFFFF'))
-    shade_cell(arch_table.rows[ri].cells[1], 'BDD7EE' if ri == 0 else ('F2F2F2' if ri % 2 == 0 else 'FFFFFF'))
+    shade_cell(arch_table.rows[ri].cells[0], 'E0E0E0' if ri == 0 else ('F2F2F2' if ri % 2 == 0 else 'FFFFFF'))
+    shade_cell(arch_table.rows[ri].cells[1], 'E0E0E0' if ri == 0 else ('F2F2F2' if ri % 2 == 0 else 'FFFFFF'))
     set_cell_text(arch_table.rows[ri].cells[0], k, bold=(ri==0), size=9, align=WD_ALIGN_PARAGRAPH.LEFT)
     set_cell_text(arch_table.rows[ri].cells[1], v, bold=(ri==0), size=9, align=WD_ALIGN_PARAGRAPH.LEFT)
 doc.add_paragraph()
@@ -450,7 +450,7 @@ add_body(doc,
 # ═══════════════════════════════════════════════════════
 # IV. SYSTEM ARCHITECTURE DIAGRAM (ASCII-style in table)
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "IV.  SYSTEM ARCHITECTURE OVERVIEW", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "IV.  SYSTEM ARCHITECTURE OVERVIEW", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_body(doc,
     "Figure 1 illustrates the complete end-to-end architecture of the proposed image captioning system. "
@@ -460,44 +460,21 @@ add_body(doc,
     "by attending to both previous words (self-attention) and image patches (cross-attention)."
 )
 
-# Architecture diagram using a table as a visual
-diag_table = doc.add_table(rows=9, cols=5)
-diag_table.style = 'Table Grid'
-diag_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-diag_layout = [
-    # row: [(col, text, fill, colspan)]
-    [('Input\nImage\n(224×224)', 'D6E4F0'), ('→', 'FFFFFF'), ('ViT-B/16 Encoder\n(12 layers, frozen)\n196 patches × 768-d', 'C6EFCE'), ('→', 'FFFFFF'), ('Encoder\nProjection\n(Linear+LN)', 'FCE4D6')],
-    [('', 'FFFFFF'), ('', 'FFFFFF'), ('', 'FFFFFF'), ('', 'FFFFFF'), ('↓', 'FFFFFF')],
-    [('Output\nCaption\n(text)', 'D6E4F0'), ('←', 'FFFFFF'), ('Linear Output Layer\n(weight-tied to\nembedding)', 'FCE4D6'), ('←', 'FFFFFF'), ('× 6  Decoder Layers\n─────────────\nMasked Self-Attn\nCross-Attn (→ heatmaps)\nFeed-Forward', 'C6EFCE')],
-    [('', 'FFFFFF'), ('', 'FFFFFF'), ('', 'FFFFFF'), ('', 'FFFFFF'), ('↑', 'FFFFFF')],
-    [('', 'FFFFFF'), ('', 'FFFFFF'), ('BERT Tokeniser\n+ Positional Encoding', 'FCE4D6'), ('', 'FFFFFF'), ('', 'FFFFFF')],
-    [('', 'FFFFFF'), ('', 'FFFFFF'), ('↑', 'FFFFFF'), ('', 'FFFFFF'), ('', 'FFFFFF')],
-    [('', 'FFFFFF'), ('', 'FFFFFF'), ('Caption tokens\n[CLS] a dog [SEP]', 'D9D9D9'), ('', 'FFFFFF'), ('', 'FFFFFF')],
-    [('', 'FFFFFF'), ('', 'FFFFFF'), ('↑  (teacher forcing\nduring training)', 'FFFFFF'), ('', 'FFFFFF'), ('', 'FFFFFF')],
-    [('Decoding: Greedy (11ms/img)  or  Beam Search k=3 (146ms/img)', ''), ('', ''), ('', ''), ('', ''), ('', '')],
-]
-
-for ri, row_items in enumerate(diag_layout[:8]):
-    for ci, (text, fill) in enumerate(row_items):
-        cell = diag_table.rows[ri].cells[ci]
-        set_cell_text(cell, text, size=9, align=WD_ALIGN_PARAGRAPH.CENTER)
-        if fill and fill != 'FFFFFF':
-            shade_cell(cell, fill)
-        cell.paragraphs[0].paragraph_format.space_before = Pt(2)
-        cell.paragraphs[0].paragraph_format.space_after = Pt(2)
-
-# Last row spans all columns
-last_row = diag_table.rows[8]
-set_cell_text(last_row.cells[0], 'Decoding: Greedy (11 ms/img) or Beam Search k=3 (146 ms/img)', size=9, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-shade_cell(last_row.cells[0], 'FFF2CC')
-
-add_caption(doc, "Fig. 1.  End-to-end system architecture of the Vision-Language image captioning model.")
+import os
+from docx.shared import Inches
+fig1_path = r"figures/fig1_architecture.png"
+if os.path.exists(fig1_path):
+    p_img = doc.add_paragraph()
+    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_img.paragraph_format.space_before = Pt(6)
+    p_img.paragraph_format.space_after = Pt(2)
+    p_img.add_run().add_picture(fig1_path, width=Inches(6.4))
+add_caption(doc, "Fig. 1.  End-to-end system architecture of the Vision-Language image captioning model showing frozen ViT-B/16 encoder, projection bridge, custom 6-layer pre-LN Transformer decoder, and weight-tied prediction head.")
 
 # ═══════════════════════════════════════════════════════
 # V. RESULTS AND DISCUSSIONS
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "V.  RESULTS AND DISCUSSIONS", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "V.  RESULTS AND DISCUSSIONS", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_heading(doc, "A.  Training Convergence", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
@@ -532,7 +509,7 @@ train_data = [
     ('12 ★', '3.4386', '2.2757', '9.73',  '0.00e+00'),
 ]
 for ci, h in enumerate(train_headers):
-    shade_cell(train_table.rows[0].cells[ci], 'BDD7EE')
+    shade_cell(train_table.rows[0].cells[ci], 'E0E0E0')
     set_cell_text(train_table.rows[0].cells[ci], h, bold=True, size=9)
 for ri, row in enumerate(train_data, start=1):
     for ci, val in enumerate(row):
@@ -576,7 +553,7 @@ res_data = [
     ('CIDEr', '0.9633', '1.0070', '1.0385 ★'),
 ]
 for ci, h in enumerate(res_headers):
-    shade_cell(res_table.rows[0].cells[ci], 'BDD7EE')
+    shade_cell(res_table.rows[0].cells[ci], 'E0E0E0')
     set_cell_text(res_table.rows[0].cells[ci], h, bold=True, size=9)
 for ri, row in enumerate(res_data, start=1):
     for ci, val in enumerate(row):
@@ -606,7 +583,7 @@ add_body(doc,
     "computational cost, suggesting k=3 as the optimal operating point for this model."
 )
 
-add_heading(doc, "D.  Qualitative Analysis — Caption Examples", size=10, bold=True, space_before=4, space_after=2)
+add_heading(doc, "D.  Qualitative Analysis - Caption Examples", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
     "Qualitative inspection of generated captions reveals several patterns consistent with "
     "the model's learned representations. The model correctly identifies: object categories "
@@ -642,14 +619,14 @@ add_body(doc,
     "The encoder features visualisation (PCA of ViT patch features and CLS-token attention "
     "from the last ViT layer) confirms that the frozen ViT encoder successfully separates "
     "foreground from background, and that the principal components of patch features capture "
-    "semantically meaningful spatial structure — further validating the choice of ViT as a "
+    "semantically meaningful spatial structure - further validating the choice of ViT as a "
     "strong visual feature extractor."
 )
 
 # ═══════════════════════════════════════════════════════
 # VI. VISUALIZATION OF RESULTS
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "VI.  VISUALIZATION OF RESULTS", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "VI.  VISUALIZATION OF RESULTS", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_body(doc,
     "The notebook produces a comprehensive set of visualisations that collectively demonstrate "
@@ -673,7 +650,7 @@ vis_data = [
     ('Attention Heatmaps', 'Word-to-patch attention for 3 val images', 'Clear spatial grounding per word'),
 ]
 for ci, h in enumerate(vis_headers):
-    shade_cell(vis_table.rows[0].cells[ci], 'BDD7EE')
+    shade_cell(vis_table.rows[0].cells[ci], 'E0E0E0')
     set_cell_text(vis_table.rows[0].cells[ci], h, bold=True, size=9)
 for ri, row in enumerate(vis_data, start=1):
     for ci, val in enumerate(row):
@@ -682,14 +659,43 @@ for ri, row in enumerate(vis_data, start=1):
         set_cell_text(vis_table.rows[ri].cells[ci], val, size=9, align=WD_ALIGN_PARAGRAPH.LEFT)
 doc.add_paragraph()
 
-add_caption(doc, "Fig. 2.  Learning curves: Training loss, validation perplexity, and learning rate across 12 epochs.")
-add_caption(doc, "Fig. 3.  Greedy vs. beam search (k=3) comparison across 7 evaluation metrics on 500 validation images.")
-add_caption(doc, "Fig. 4.  Cross-attention heatmaps showing word-to-image-patch grounding for selected generated words.")
+fig2_path = r"figures/fig2_learning_curves.png"
+if os.path.exists(fig2_path):
+    p_img = doc.add_paragraph()
+    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_img.paragraph_format.space_before = Pt(6)
+    p_img.paragraph_format.space_after = Pt(2)
+    p_img.add_run().add_picture(fig2_path, width=Inches(6.4))
+add_caption(doc, "Fig. 2.  Learning curves: Training loss, validation perplexity, and learning rate progression across 12 epochs on MS COCO 2017.")
+fig3_path = r"figures/fig3_greedy_vs_beam.png"
+if os.path.exists(fig3_path):
+    p_img = doc.add_paragraph()
+    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_img.paragraph_format.space_before = Pt(6)
+    p_img.paragraph_format.space_after = Pt(2)
+    p_img.add_run().add_picture(fig3_path, width=Inches(4.8))
+add_caption(doc, "Fig. 3.  Greedy vs. beam search (k=3) comparison across all 7 evaluation metrics on 500 validation images.")
+fig4_path = r"figures/fig4_attention_heatmaps.png"
+if os.path.exists(fig4_path):
+    p_img = doc.add_paragraph()
+    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_img.paragraph_format.space_before = Pt(6)
+    p_img.paragraph_format.space_after = Pt(2)
+    p_img.add_run().add_picture(fig4_path, width=Inches(6.4))
+add_caption(doc, "Fig. 4.  Cross-attention heatmaps showing word-to-image-patch grounding for generated words from the custom Transformer decoder.")
+fig5_path = r"figures/caption_evolution.png"
+if os.path.exists(fig5_path):
+    p_img = doc.add_paragraph()
+    p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_img.paragraph_format.space_before = Pt(6)
+    p_img.paragraph_format.space_after = Pt(2)
+    p_img.add_run().add_picture(fig5_path, width=Inches(6.4))
+add_caption(doc, "Fig. 5.  Caption evolution across epochs 1, 3, 6, 9, and 12 on fixed validation monitor images.")
 
 # ═══════════════════════════════════════════════════════
 # VII. PERFORMANCE COMPARISON
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "VII.  PERFORMANCE COMPARISON", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "VII.  PERFORMANCE COMPARISON", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_body(doc,
     "Table VI contextualises our results against published baselines on the MS COCO dataset. "
@@ -705,15 +711,15 @@ comp_table.style = 'Table Grid'
 comp_table.alignment = WD_TABLE_ALIGNMENT.CENTER
 comp_headers = ['Method', 'Encoder', 'BLEU-4', 'METEOR', 'CIDEr']
 comp_data = [
-    ('Show & Tell (2015)', 'GoogLeNet', '0.277', '0.237', '—'),
-    ('Show, Attend & Tell (2015)', 'VGG-16', '0.250', '0.230', '—'),
+    ('Show & Tell (2015)', 'GoogLeNet', '0.277', '0.237', '-'),
+    ('Show, Attend & Tell (2015)', 'VGG-16', '0.250', '0.230', '-'),
     ('Up-Down (2018)', 'Faster R-CNN', '0.363', '0.277', '1.202'),
     ('Transformer (Li et al. 2019)', 'ResNet grid', '0.340', '0.270', '1.100'),
     ('This Work (Greedy)', 'ViT-B/16 (frozen)', '0.297', '0.483', '0.963'),
     ('This Work (Beam k=3)', 'ViT-B/16 (frozen)', '0.323', '0.490', '1.039'),
 ]
 for ci, h in enumerate(comp_headers):
-    shade_cell(comp_table.rows[0].cells[ci], 'BDD7EE')
+    shade_cell(comp_table.rows[0].cells[ci], 'E0E0E0')
     set_cell_text(comp_table.rows[0].cells[ci], h, bold=True, size=9)
 for ri, row in enumerate(comp_data, start=1):
     for ci, val in enumerate(row):
@@ -734,7 +740,7 @@ add_body(doc,
 # ═══════════════════════════════════════════════════════
 # VIII. OBSERVATIONS
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "VIII.  OBSERVATIONS", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "VIII.  OBSERVATIONS", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_heading(doc, "A.  Novelty and Distinguishing Factors", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
@@ -757,7 +763,7 @@ nov_data = [
     ('Analysis', 'Loss curves only', 'EDA, encoder PCA, per-image scores, attention layers/heads analysis'),
 ]
 for ci, h in enumerate(nov_headers):
-    shade_cell(nov_table.rows[0].cells[ci], 'BDD7EE')
+    shade_cell(nov_table.rows[0].cells[ci], 'E0E0E0')
     set_cell_text(nov_table.rows[0].cells[ci], h, bold=True, size=9)
 for ri, row in enumerate(nov_data, start=1):
     for ci, val in enumerate(row):
@@ -773,14 +779,14 @@ add_body(doc,
     "the attention mechanism is fully interpretable via word-level heatmaps, making the model "
     "transparent and explainable. Third, the tokenisation using BERT WordPiece handles rare "
     "words via subword decomposition, preventing out-of-vocabulary issues. Fourth, beam search "
-    "yields a CIDEr > 1.0 — surpassing what many single-model systems achieve — validating "
+    "yields a CIDEr > 1.0 - surpassing what many single-model systems achieve - validating "
     "the ViT-B/16 encoder as a highly effective visual feature extractor."
 )
 
 add_heading(doc, "C.  Limitations and Failure Cases", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
     "The model exhibits some systematic limitations. Object hallucination is occasionally "
-    "observed — generating objects not present in the image when the scene is ambiguous. "
+    "observed - generating objects not present in the image when the scene is ambiguous. "
     "Fine-grained attribute binding (e.g., 'a red car next to a blue bicycle' vs. "
     "'a blue car next to a red bicycle') remains challenging. Scene understanding for complex "
     "crowd scenes or unusual viewpoints is weaker than for prototypical COCO scenes. "
@@ -791,7 +797,7 @@ add_body(doc,
 # ═══════════════════════════════════════════════════════
 # IX. CONCLUSION AND FUTURE WORK
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "IX.  CONCLUSION AND FUTURE WORK", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "IX.  CONCLUSION AND FUTURE WORK", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 add_heading(doc, "A.  Conclusion", size=10, bold=True, space_before=4, space_after=2)
 add_body(doc,
@@ -799,7 +805,7 @@ add_body(doc,
     "image captioning system combining a pretrained Vision Transformer (ViT-B/16) encoder with "
     "a custom six-layer Transformer decoder. Trained for 12 epochs on 118,287 MS COCO 2017 "
     "images, the model achieves a validation perplexity of 9.73, BLEU-4 = 0.3225, and "
-    "CIDEr = 1.0385 with beam search (k=3) — results that are competitive with published "
+    "CIDEr = 1.0385 with beam search (k=3) - results that are competitive with published "
     "baselines and demonstrate the effectiveness of the pure-attention paradigm for "
     "vision-language tasks."
 )
@@ -811,7 +817,7 @@ add_body(doc,
     "native attention return mechanism provides novel explainability without requiring "
     "any modification of PyTorch source code. Together, these contributions represent a "
     "thorough, well-documented, and reproducible study of the ViT + Transformer decoder "
-    "paradigm for image captioning — one that is suitable for publication at a university-level "
+    "paradigm for image captioning - one that is suitable for publication at a university-level "
     "deep learning course final project."
 )
 
@@ -831,9 +837,15 @@ add_body(doc,
 )
 
 # ═══════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
+# CODE AVAILABILITY
+# ═══════════════════════════════════════════════════════
+add_heading(doc, "CODE AVAILABILITY", size=11, bold=True, space_before=8, space_after=4)
+add_body(doc, "The complete source code, trained checkpoints, executed Jupyter notebooks, evaluation suites, and LaTeX reports are publicly accessible on GitHub at: https://github.com/Waseem-Irfan-100/Visual-Language-image-captioning-using-Transformers.git")
+
 # REFERENCES
 # ═══════════════════════════════════════════════════════
-add_heading(doc, "REFERENCES", size=11, bold=True, space_before=8, space_after=4, color=(0, 51, 102))
+add_heading(doc, "REFERENCES", size=11, bold=True, space_before=8, space_after=4, color=(0, 0, 0))
 
 refs_text = [
     "[1] O. Vinyals, A. Toshev, S. Bengio, and D. Erhan, \"Show and Tell: A Neural Image Caption Generator,\" in Proc. IEEE CVPR, 2015, pp. 3156–3164.",
@@ -873,6 +885,6 @@ for ref in refs_text:
 # ═══════════════════════════════════════════════════════
 # SAVE
 # ═══════════════════════════════════════════════════════
-out_path = r'F:\Assingments\sem7\deep_learning\Project\Group8_ImageCaptioning_Report.docx'
+out_path = r'F:\Assingments\sem7\deep_learning\Project\Group8_ImageCaptioning_Report_Revised.docx'
 doc.save(out_path)
 print(f"Report saved to: {out_path}")

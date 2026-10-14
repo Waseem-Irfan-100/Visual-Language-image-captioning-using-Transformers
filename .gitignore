@@ -39,3 +39,7 @@ ENV/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Word lock files
+~$*
+

@@ -1,0 +1,412 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{subcaption}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Vision-Language Image Captioning with Transformers}
+
+\author{\IEEEauthorblockN{Syed Waseem Irfan}
+\IEEEauthorblockA{\textit{Dept. of Computer Science \& Eng.} \\
+\textit{IIIT Kurnool}\\
+Kurnool, India \\
+2023bcs0100@iiitk.ac.in}
+\and
+\IEEEauthorblockN{B Yogendra}
+\IEEEauthorblockA{\textit{Dept. of Computer Science \& Eng.} \\
+\textit{IIIT Kurnool}\\
+Kurnool, India \\
+2023bcs0146@iiitk.ac.in}
+\and
+\IEEEauthorblockN{K Sumith}
+\IEEEauthorblockA{\textit{Dept. of Computer Science \& Eng.} \\
+\textit{IIIT Kurnool}\\
+Kurnool, India \\
+2023bcs0124@iiitk.ac.in}
+}
+
+\maketitle
+
+\begin{abstract}
+Image captioning requires joint understanding of visual content and linguistic structure to generate descriptive natural language. Conventional architectures rely on Convolutional Neural Networks (CNNs) for visual feature extraction paired with Recurrent Neural Networks (RNNs or LSTMs) for sequential text decoding, which suffer from inductive grid biases and vanishing gradient limitations. In this work, we present an end-to-end Vision-Language architecture based entirely on the Transformer framework. The visual backbone utilizes a pre-trained Vision Transformer (ViT-B/16) that projects $224 \times 224$ input images into 196 non-overlapping spatial patches plus a classification token ($197 \times 768$), capturing global context through 12 self-attention layers. The language generation is handled by a custom six-layer, eight-head pre-LayerNorm Transformer decoder built from scratch, eliminating any recurrent dependencies. A linear projection bridge aligns visual features into the decoder embedding space, while weight-tying between the BERT WordPiece token embeddings (vocabulary: 30,522) and the final projection layer regularizes training. Evaluated on the benchmark Microsoft COCO 2017 dataset (118,287 training images, 5,000 validation images) over 12 epochs, the proposed system demonstrates monotonic convergence, lowering validation perplexity from 43.83 to 9.73. Using beam search decoding ($k=3$), our model achieves competitive scores across seven automated metrics: BLEU-1 = 0.7238, BLEU-2 = 0.5581, BLEU-3 = 0.4221, BLEU-4 = 0.3225, METEOR = 0.4897, ROUGE-L = 0.5551, and CIDEr = 1.0385. The custom decoder exposes cross-attention distributions natively, providing visual explainability through high-resolution spatial heatmaps that ground emitted tokens directly to corresponding image patches.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Image Captioning, Vision-Language Models, Vision Transformer, Transformer Decoder, Cross-Attention, Multi-Modal Learning.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Automated image captioning is a foundational multimodal task bridging computer vision and natural language processing. The objective is to generate semantically accurate, syntactically coherent sentences describing salient visual entities, attributes, and relationships depicted within an arbitrary input photograph. Real-world applications range from digital accessibility assistive technologies for visually impaired individuals to multimodal search, content moderation, and automated media cataloging.
+
+Historically, the dominant formulation followed the encoder-decoder paradigm pioneered by Show and Tell \cite{vinyals2015show}, where a convolutional neural network (CNN), such as VGG or ResNet, extracted a global spatial visual vector, and a Long Short-Term Memory (LSTM) network decoded it into a sequence of words. Subsequent enhancements introduced spatial attention mechanisms \cite{xu2015show} and bottom-up region proposals derived from object detectors \cite{anderson2018bottom}. Despite their empirical success, these hybrid CNN-LSTM pipelines face fundamental bottlenecks: CNN encoders impose rigid local receptive field biases that struggle to capture long-range contextual relationships without deep stacking, while recurrent decoders suffer from sequential execution constraints and gradient degradation over extended sentence lengths.
+
+The emergence of the Transformer architecture \cite{vaswani2017attention} revolutionized sequence modeling through multi-head self-attention, replacing recurrent recurrence with parallelizable self-attention. Subsequently, the Vision Transformer (ViT) \cite{dosovitskiy2020image} extended self-attention directly to visual patches, demonstrating that pure attention mechanisms can outperform convolutional networks when pre-trained at scale.
+
+In this paper, we develop, evaluate, and interpret a pure Transformer Vision-Language image captioning architecture. Our contributions are summarized as follows:
+\begin{enumerate}
+    \item We implement an all-Transformer vision-language pipeline that replaces CNN feature maps and LSTM decoders with a pre-trained ViT-B/16 visual encoder and a custom six-layer Transformer language decoder built from scratch.
+    \item We design a custom pre-LayerNorm (pre-LN) decoder layer that natively returns cross-attention matrices during generation, enabling explainability heatmaps without requiring runtime monkey-patching of deep learning frameworks.
+    \item We implement a stable training recipe incorporating BERT WordPiece subword tokenization, token-to-output weight tying, label smoothing regularizer ($\epsilon = 0.1$), cosine learning rate scheduling with linear warmup, and automatic mixed precision (AMP FP16).
+    \item We report an extensive evaluation on MS COCO 2017 across seven automated metrics, verifying that beam search ($k=3$) yields a CIDEr score of 1.0385 and BLEU-4 of 0.3225, alongside systematic ablations of beam width and per-epoch caption evolution.
+\end{enumerate}
+
+\section{Literature Review}
+\subsection{Early CNN-RNN and Attention-Based Foundations}
+Early deep learning systems for image captioning treated the problem as an image-to-text translation task. Vinyals et al. \cite{vinyals2015show} utilized CNNs pre-trained on ImageNet to compress images into a single vector fed as the initial hidden state to an LSTM network. While effective, compressing the entire image into a static vector caused bottlenecking, especially for complex scenes with multiple interacting objects. 
+
+To mitigate spatial information loss, Xu et al. \cite{xu2015show} proposed the ``Show, Attend and Tell'' model, introducing soft and hard spatial attention over CNN feature maps. This enabled the decoder to dynamically attend to specific convolutional grid cells at each time step. Anderson et al. \cite{anderson2018bottom} advanced this concept through the ``Up-Down'' (Bottom-Up and Top-Down) attention framework, replacing grid features with bounding box features extracted from a pre-trained Faster R-CNN object detector. While this established a benchmark, relying on pre-trained object detectors introduced significant computational overhead during feature extraction and limited visual representations to pre-defined object classes.
+
+\subsection{Transformers in Vision and Language}
+The Transformer architecture introduced by Vaswani et al. \cite{vaswani2017attention} eliminated recurrence entirely, relying entirely on self-attention and cross-attention mechanisms. In vision, Dosovitskiy et al. \cite{dosovitskiy2020image} demonstrated with the Vision Transformer (ViT) that treating non-overlapping $16 \times 16$ image patches as visual tokens yields strong contextual representations without convolutional inductive bias. In multimodal research, frameworks such as VisualBERT \cite{li2019visualbert}, Oscar \cite{li2020oscar}, and Meshed-Memory Transformer ($M^2$) \cite{cornia2020meshed} explored multi-level Transformer architectures for multimodal reasoning.
+
+Our work builds on these foundations by adopting a clean, decoupled two-stage design: a high-capacity frozen ViT-B/16 encoder providing 197 patch tokens, coupled through a linear projection bridge to a custom 6-layer Transformer decoder trained from scratch using BERT subword tokenization.
+
+\begin{table}[htbp]
+\caption{Literature Review Summary of Image Captioning Architectures}
+\label{tab:lit_review}
+\centering
+\begin{tabular}{lp{2.4cm}p{2.3cm}p{1.8cm}}
+\toprule
+\textbf{Model} & \textbf{Visual Encoder} & \textbf{Text Decoder} & \textbf{Key Limitation} \\
+\midrule
+Show \& Tell \cite{vinyals2015show} & VGG-16 / GoogLeNet & Standard LSTM & Static image vector bottleneck \\
+Show, Attend \& Tell \cite{xu2015show} & ResNet-101 (Grid) & Attention LSTM & Weak long-range token dynamics \\
+Up-Down \cite{anderson2018bottom} & Faster R-CNN (Boxes) & Two-layer LSTM & Slow detector dependence \\
+$M^2$ Transformer \cite{cornia2020meshed} & ResNet-101 (Regions) & Meshed Transformer & Heavy region feature pipeline \\
+\textbf{Proposed System} & \textbf{ViT-B/16 (Patches)} & \textbf{Custom Transformer} & \textbf{End-to-end attention} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Methodology}
+\subsection{Problem Formulation}
+Given an input photograph $I$, the objective is to generate an output natural language description $Y = (y_1, y_2, \dots, y_T)$, where each $y_t \in \mathcal{V}$ denotes a token from a predefined discrete vocabulary $\mathcal{V}$, and $T$ is the total sequence length terminated by an end-of-sequence token $[SEP]$. Under the autoregressive factorization, the conditional joint probability distribution is parameterized as:
+\begin{equation}
+P(Y \mid I; \theta) = \prod_{t=1}^T P(y_t \mid y_{<t}, I; \theta)
+\end{equation}
+where $y_{<t} = (y_1, \dots, y_{t-1})$ represents the previously emitted tokens, and $\theta$ denotes the trainable network parameters.
+
+\subsection{Dataset and Preprocessing Pipeline}
+We utilize the full Microsoft COCO 2017 Captioning benchmark \cite{lin2014microsoft}. The training split comprises 118,287 images with 591,753 human-annotated captions (averaging 5 independent reference captions per image). The validation set comprises 5,000 images with 25,014 reference captions. 
+
+During training, each image is randomly paired with one of its five reference captions at each epoch to regularize generation and prevent memorization. Input images undergo standard Vision Transformer preprocessing: resizing to $224 \times 224$ pixels, bilinear interpolation, normalization with ImageNet channel statistics ($\mu = [0.485, 0.456, 0.406]$, $\sigma = [0.229, 0.224, 0.225]$), and data augmentation including random horizontal flipping.
+
+\subsection{Subword Tokenization}
+Unlike conventional image captioning systems that construct domain-specific vocabularies based on word frequency thresholds (which frequently encounter out-of-vocabulary $[UNK]$ tokens), we employ the pre-trained BERT WordPiece subword tokenizer (\texttt{bert-base-uncased}) \cite{devlin2018bert}. This vocabulary comprises 30,522 subword tokens. The $[CLS]$ token serves as the beginning-of-sequence ($BOS$) prompt, $[SEP]$ marks sequence termination ($EOS$), and $[PAD]$ facilitates batch padding. Target captions are capped at a maximum length of 50 tokens, which empirically covers 99.97\% of the COCO distribution without truncation.
+
+\subsection{Optimization and Training Strategy}
+The model is trained using the AdamW optimizer \cite{loshchilov2017decoupled} with decoupled weight decay of 0.01 and momentum parameters $\beta_1 = 0.9, \beta_2 = 0.98$. The learning rate is initialized with a linear warmup over the first 1,000 steps up to a peak value of $\eta_{\text{max}} = 3.0 \times 10^{-4}$, followed by cosine annealing decay down to $\eta_{\text{min}} = 2.5 \times 10^{-6}$ over the remaining training steps. 
+
+To prevent overconfident predictions and mitigate label overfitting, we utilize Cross-Entropy loss with Label Smoothing ($\epsilon = 0.1$):
+\begin{equation}
+\mathcal{L}_{\text{LS}}(\theta) = -\sum_{t=1}^T \sum_{k=1}^{|\mathcal{V}|} q_k(t) \log P(y_t = k \mid y_{<t}, I; \theta)
+\end{equation}
+where the smoothed target distribution $q_k(t)$ is defined as:
+\begin{equation}
+q_k(t) = (1 - \epsilon) \cdot \mathbb{I}(y_t^* = k) + \frac{\epsilon}{|\mathcal{V}|}
+\end{equation}
+Training is executed with a batch size of 64 on an NVIDIA Tesla T4 GPU (16 GB VRAM) utilizing PyTorch Automatic Mixed Precision (AMP FP16) and gradient clipping with a maximum norm threshold of 1.0.
+
+\section{System Architecture}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/fig1_architecture.png}
+\caption{End-to-end system architecture of the Vision-Language image captioning framework. The visual branch (left) decomposes the input image into 196 spatial patches and processes them via a frozen ViT-B/16 backbone. The language decoder branch (center) processes prefix tokens through six stacked pre-LN Transformer layers featuring causal self-attention and cross-attention over visual memory. The prediction head (right) utilizes tied weights to emit token probabilities decoded via greedy or beam search.}
+\label{fig:architecture}
+\end{figure*}
+
+The complete architectural pipeline of the proposed Vision-Language system is illustrated in Fig. \ref{fig:architecture}. The model consists of four integrated components: the visual patch encoder, the projection bridge, the custom Transformer decoder, and the weight-tied language prediction head.
+
+\subsection{Visual Encoder Backbone}
+The visual encoder utilizes the Vision Transformer ViT-B/16 architecture pre-trained on ImageNet-21k (\texttt{google/vit-base-patch16-224-in21k}) \cite{dosovitskiy2020image}. An input image $I \in \mathbb{R}^{H \times W \times C}$ ($224 \times 224 \times 3$) is partitioned into a sequence of non-overlapping $16 \times 16$ spatial patches $x_p \in \mathbb{R}^{N \times (P^2 \cdot C)}$, where $P = 16$ and the number of patches is:
+\begin{equation}
+N = \frac{H \cdot W}{P^2} = \frac{224 \cdot 224}{16 \cdot 16} = 196
+\end{equation}
+Each flattened patch is linearly projected into a 768-dimensional latent space. A learnable classification token $[CLS]$ is prepended to the sequence, and 1D learnable position embeddings $E_{\text{pos}} \in \mathbb{R}^{197 \times 768}$ are added element-wise:
+\begin{equation}
+z_0 = [x_{\text{class}}; x_p^1 E; \dots; x_p^N E] + E_{\text{pos}}
+\end{equation}
+The sequence passes through 12 Transformer encoder blocks, each consisting of Multi-Head Self-Attention (12 heads, $d_k = 64$) and Multi-Layer Perceptron (MLP) blocks ($d_{\text{ff}} = 3072$). In our primary configuration, the ViT backbone parameters ($\approx 86\text{M}$) remain frozen to preserve pre-trained general visual semantics and accelerate training.
+
+\subsection{Projection Bridge}
+To decouple the encoder representations from the decoder and facilitate gradient conditioning, the 197 visual token representations are projected through a linear bridge layer followed by Layer Normalization:
+\begin{equation}
+Z_{\text{memory}} = \text{LayerNorm}(z_{12} W_{\text{proj}} + b_{\text{proj}})
+\end{equation}
+where $W_{\text{proj}} \in \mathbb{R}^{768 \times 768}$. The resulting tensor $Z_{\text{memory}} \in \mathbb{R}^{B \times 197 \times 768}$ serves as the immutable visual key and value representations for all decoder cross-attention layers.
+
+\subsection{Custom Pre-LN Transformer Decoder}
+The text generation decoder is constructed from scratch without relying on canned recurrent abstractions. It consists of a stack of $L = 6$ identical Transformer decoder layers operating with model dimensionality $d_{\text{model}} = 768$, $h = 8$ attention heads, and inner feed-forward dimension $d_{\text{ff}} = 2048$.
+
+We implement the Pre-LayerNorm (pre-LN) formulation, which places normalization layers inside the residual branches prior to attention and feed-forward operations. Pre-LN significantly improves gradient stability compared to post-LN designs, eliminating the need for delicate learning rate warmup schedules in deep decoders. Each decoder layer executes three sub-operations:
+\begin{enumerate}
+    \item \textbf{Masked Multi-Head Self-Attention:} Computes causal self-attention across text tokens. An upper-triangular mask $M \in \mathbb{R}^{T \times T}$ ($M_{ij} = -\infty$ for $j > i$) prevents query tokens from attending to subsequent tokens:
+    \begin{equation}
+    \text{SelfAttn}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}} + M\right) V
+    \end{equation}
+    \item \textbf{Multi-Head Cross-Attention:} Queries $Q_t \in \mathbb{R}^{T \times 768}$ derived from text representations attend to keys $K_v \in \mathbb{R}^{197 \times 768}$ and values $V_v \in \mathbb{R}^{197 \times 768}$ from the visual encoder memory:
+    \begin{equation}
+    A = \text{softmax}\left(\frac{Q_t K_v^T}{\sqrt{d_k}}\right), \quad \text{CrossAttn} = A \cdot V_v
+    \end{equation}
+    Crucially, our custom implementation directly returns the cross-attention probability tensor $A \in \mathbb{R}^{B \times h \times T \times 197}$, allowing external extraction of spatial heatmaps without modifying PyTorch internals.
+    \item \textbf{Position-wise Feed-Forward Network:} A two-layer MLP with Gaussian Error Linear Unit (GELU) activation:
+    \begin{equation}
+    \text{FFN}(x) = \text{GELU}(x W_1 + b_1) W_2 + b_2
+    \end{equation}
+\end{enumerate}
+
+\subsection{Weight Tying and Prediction Head}
+Following token embedding projection, the decoder output states $H_T \in \mathbb{R}^{B \times T \times 768}$ are normalized and mapped to vocabulary logits. We implement weight tying between the input token embedding matrix $E_{\text{tok}} \in \mathbb{R}^{30522 \times 768}$ and the final classification projection layer:
+\begin{equation}
+\text{Logits}_t = H_t E_{\text{tok}}^T + b_{\text{out}}
+\end{equation}
+Weight tying reduces total trainable parameters by $\approx 23.4\text{M}$ parameters (from 94.7M to 71.33M) and significantly reduces vocabulary overfitting.
+
+\begin{table}[htbp]
+\caption{Detailed Hyperparameters and Architectural Specifications}
+\label{tab:arch_specs}
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Hyperparameter / Component} & \textbf{Configuration Value} \\
+\midrule
+Visual Backbone & ViT-B/16 (\texttt{google/vit-base-patch16-224-in21k}) \\
+Input Image Resolution & $224 \times 224 \times 3$ \\
+Visual Patch Dimensions & $16 \times 16$ ($N = 196$ patches + 1 $[CLS]$) \\
+Encoder Dimension ($d_{\text{encoder}}$) & 768 (12 layers, 12 heads, frozen) \\
+Projection Layer & Linear ($768 \to 768$) + LayerNorm \\
+Decoder Layers ($L$) & 6 stacked Pre-LN Transformer layers \\
+Decoder Attention Heads ($h$) & 8 heads ($d_k = d_v = 96$) \\
+Decoder Feed-Forward Dim ($d_{\text{ff}}$) & 2048 (GELU activation) \\
+Vocabulary Size ($|\mathcal{V}|$) & 30,522 (BERT WordPiece \texttt{bert-base-uncased}) \\
+Maximum Sequence Length & 50 tokens \\
+Dropout Rate & 0.1 \\
+Weight Tying & Enabled ($E_{\text{tok}} \equiv W_{\text{out}}$) \\
+Trainable Parameters & 71,332,698 ($\approx 71.33\text{M}$) \\
+Frozen Parameters & 86,567,656 ($\approx 86.57\text{M}$) \\
+Batch Size & 64 \\
+Optimizer & AdamW ($\beta_1 = 0.9, \beta_2 = 0.98, \text{decay} = 0.01$) \\
+Peak Learning Rate & $3.0 \times 10^{-4}$ (Linear warmup 1000 steps) \\
+LR Decay Schedule & Cosine annealing to $2.5 \times 10^{-6}$ \\
+Label Smoothing ($\epsilon$) & 0.1 \\
+Hardware Platform & NVIDIA Tesla T4 GPU (16 GB VRAM) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results and Discussions}
+\subsection{Training Convergence Dynamics}
+The system was trained for 12 complete epochs on the MS COCO 2017 training set, consuming approximately 208 minutes of total compute time ($\approx 17.3$ minutes per epoch). The training history across all 12 epochs is documented in Table \ref{tab:training_history}.
+
+\begin{table}[htbp]
+\caption{Per-Epoch Training and Validation Progression}
+\label{tab:training_history}
+\centering
+\begin{tabular}{cccccc}
+\toprule
+\textbf{Epoch} & \textbf{Train Loss} & \textbf{Val Loss} & \textbf{Val PPL} & \textbf{Learning Rate} & \textbf{Checkpoint} \\
+\midrule
+1  & 7.005 & 3.780 & 43.83 & $3.00 \times 10^{-4}$ & Best $\star$ \\
+2  & 4.621 & 3.125 & 22.76 & $2.95 \times 10^{-4}$ & Best $\star$ \\
+3  & 4.215 & 2.852 & 17.32 & $2.80 \times 10^{-4}$ & Best $\star$ \\
+4  & 3.987 & 2.684 & 14.64 & $2.55 \times 10^{-4}$ & Best $\star$ \\
+5  & 3.842 & 2.571 & 13.08 & $2.22 \times 10^{-4}$ & Best $\star$ \\
+6  & 3.738 & 2.495 & 12.12 & $1.84 \times 10^{-4}$ & Best $\star$ \\
+7  & 3.664 & 2.436 & 11.43 & $1.50 \times 10^{-4}$ & Best $\star$ \\
+8  & 3.612 & 2.391 & 10.92 & $1.25 \times 10^{-4}$ & Best $\star$ \\
+9  & 3.561 & 2.348 & 10.46 & $0.85 \times 10^{-4}$ & Best $\star$ \\
+10 & 3.511 & 2.312 & 10.09 & $0.50 \times 10^{-4}$ & Best $\star$ \\
+11 & 3.468 & 2.289 & 9.86  & $0.20 \times 10^{-4}$ & Best $\star$ \\
+12 & \textbf{3.439} & \textbf{2.276} & \textbf{9.73}  & $2.50 \times 10^{-6}$ & \textbf{Optimal} $\star$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Validation loss decreased monotonically at every single epoch, dropping from 3.780 to 2.276, while validation perplexity decreased by 77.8\% (from 43.83 to 9.73). Noticeably, the apparent numerical gap where training loss appears higher than validation loss (e.g., 3.439 vs. 2.276 at Epoch 12) is a direct, expected consequence of label smoothing: $\mathcal{L}_{\text{LS}}$ penalizes confident predictions uniformly across the 30,522-class vocabulary by adding $-\epsilon \log(1/|\mathcal{V}|) \approx 1.04$ nats to the training objective, whereas standard cross-entropy is evaluated at validation time.
+
+\subsection{Quantitative Benchmark Across Seven Metrics}
+We conduct evaluation on the COCO validation split using the official MS COCO evaluation suite, comparing Greedy Search ($N = 5{,}000$ validation images) against Beam Search ($k = 3$, length penalty $\alpha = 0.7$, on $N = 500$ validation images). Table \ref{tab:results_metrics} details the full quantitative breakdown.
+
+\begin{table}[htbp]
+\caption{Quantitative Evaluation on MS COCO 2017 Validation Set}
+\label{tab:results_metrics}
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metric} & \textbf{Greedy ($N=5000$)} & \textbf{Beam $k=3$ ($N=500$)} & \textbf{Absolute $\Delta$} \\
+\midrule
+BLEU-1   & 0.7225 & \textbf{0.7238} & +0.0013 \\
+BLEU-2   & 0.5529 & \textbf{0.5581} & +0.0052 \\
+BLEU-3   & 0.4070 & \textbf{0.4221} & +0.0151 \\
+BLEU-4   & 0.2970 & \textbf{0.3225} & \textbf{+0.0255} \\
+METEOR   & 0.4831 & \textbf{0.4897} & +0.0066 \\
+ROUGE-L  & 0.5418 & \textbf{0.5551} & +0.0133 \\
+CIDEr    & 0.9633 & \textbf{1.0385} & \textbf{+0.0752} \\
+\midrule
+Latency / Img & \textbf{11.1 ms} & 146.0 ms & $13.1\times$ slower \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Beam search ($k=3$) consistently outperforms greedy search across all seven metrics. The largest improvements manifest in higher-order n-gram and consensus metrics: BLEU-4 increases from 0.2970 to 0.3225 (+8.6\% relative), while CIDEr increases from 0.9633 to 1.0385 (+7.8\% relative), successfully surpassing the competitive 1.0 threshold for image captioning systems.
+
+\subsection{Beam Search Ablation Analysis}
+To characterize the trade-off between decoding quality and computational latency, we evaluated beam widths $k \in \{1, 2, 3, 5\}$. As shown in Table \ref{tab:beam_ablation}, increasing the beam width from $k=1$ (greedy) to $k=2$ delivers a substantial jump in CIDEr (+0.0491) for modest additional computation. Moving to $k=3$ achieves the optimal performance-to-speed balance at 1.0385 CIDEr. Increasing to $k=5$ yields diminishing returns (1.0421 CIDEr) while nearly doubling latency to 285.3 ms per image.
+
+\begin{table}[htbp]
+\caption{Decoding Strategy Ablation: Impact of Beam Width $k$}
+\label{tab:beam_ablation}
+\centering
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Beam Width ($k$)} & \textbf{BLEU-4} & \textbf{ROUGE-L} & \textbf{CIDEr} & \textbf{Inference Speed} \\
+\midrule
+$k=1$ (Greedy) & 0.2970 & 0.5418 & 0.9633 & \textbf{11.1 ms/image} \\
+$k=2$          & 0.3142 & 0.5496 & 1.0124 & 88.4 ms/image \\
+\textbf{$k=3$} & \textbf{0.3225} & \textbf{0.5551} & \textbf{1.0385} & 146.0 ms/image \\
+$k=5$          & 0.3248 & 0.5568 & 1.0421 & 285.3 ms/image \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Visualization of Results}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/fig2_learning_curves.png}
+\caption{Empirical training and validation convergence curves across 12 epochs on MS COCO 2017: (Left) Loss curves exhibiting steady reduction in training and validation objectives without signs of overfitting; (Center) Validation perplexity dropping monotonically from 43.83 down to 9.73; (Right) Scheduled cosine learning rate trajectory with initial linear warmup.}
+\label{fig:learning_curves}
+\end{figure*}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig3_greedy_vs_beam.png}
+\caption{Side-by-side performance comparison of Greedy Search versus Beam Search ($k=3$) across all seven automated evaluation metrics on 500 validation images.}
+\label{fig:greedy_vs_beam}
+\end{figure}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/fig4_attention_heatmaps.png}
+\caption{Cross-attention interpretability heatmaps generated by the custom Transformer decoder for validation images. Each panel displays the spatial attention distribution over the $14 \times 14$ visual patch grid for an emitted word token. The network clearly focuses on semantic visual regions corresponding to predicted nouns (e.g., attending directly to animals, vehicles, and objects when uttering their respective labels).}
+\label{fig:attention_heatmaps}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/caption_evolution.png}
+\caption{Qualitative caption evolution tracking over four fixed validation images across epochs 1, 3, 6, 9, and 12. In early epochs, the model produces generic or repetitive tokens, but progressively acquires fine-grained object discrimination, spatial relationships, and contextual adjectives as training proceeds.}
+\label{fig:caption_evolution}
+\end{figure*}
+
+\subsection{Convergence Curves}
+Fig. \ref{fig:learning_curves} displays the training dynamics recorded during training. The validation loss tracks the training loss smoothly throughout the entire 12-epoch training duration. The validation perplexity drops sharply from 43.83 to 14.64 within the first four epochs and steadily converges to 9.73 at Epoch 12.
+
+\subsection{Decoding Performance Comparison}
+Fig. \ref{fig:greedy_vs_beam} illustrates the metric gains achieved by beam search ($k=3$) over greedy decoding. Beam search consistently improves all multi-gram lexical and semantic metrics by exploring multiple candidate hypotheses and mitigating early local greediness.
+
+\subsection{Cross-Attention Interpretability}
+Fig. \ref{fig:attention_heatmaps} presents the spatial attention maps extracted directly from the cross-attention layers of our decoder. The 196 attention weights for each generated word are extracted, reshaped into a $14 \times 14$ spatial grid, and upsampled via bicubic interpolation onto the $224 \times 224$ input image. The heatmaps demonstrate that the decoder attends to specific, semantically grounded visual regions when emitting nouns and salient verbs (e.g., attending tightly to the dog's body when generating ``dog'', and to the grass surface when generating ``field'').
+
+\subsection{Caption Evolution Across Epochs}
+Fig. \ref{fig:caption_evolution} traces generated captions on fixed monitor images across epochs. At Epoch 1, the model emits rudimentary syntax with frequent hallucinations. By Epoch 6, syntactic coherence stabilizes with correct dominant object identification. By Epoch 12, captions exhibit descriptive fidelity, correctly capturing complex multi-object spatial interactions.
+
+\section{Performance Comparison}
+In Table \ref{tab:baseline_comparison}, we benchmark our model against representative published systems on the MS COCO dataset.
+
+\begin{table}[htbp]
+\caption{Benchmark Comparison Against Published Models on MS COCO}
+\label{tab:baseline_comparison}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model Architecture} & \textbf{BLEU-1} & \textbf{BLEU-4} & \textbf{METEOR} & \textbf{CIDEr} \\
+\midrule
+Show \& Tell (Vinyals et al. \cite{vinyals2015show})       & 0.666 & 0.277 & 0.237 & 0.855 \\
+Show, Attend \& Tell (Xu et al. \cite{xu2015show})         & 0.707 & 0.250 & 0.230 & 0.860 \\
+Adaptive Attention (Lu et al. \cite{lu2017knowing})        & 0.742 & 0.332 & 0.266 & 1.085 \\
+Up-Down (Anderson et al. \cite{anderson2018bottom})        & \textbf{0.772} & \textbf{0.363} & 0.277 & \textbf{1.201} \\
+Meshed-Memory $M^2$ (Cornia et al. \cite{cornia2020meshed}) & 0.808 & 0.391 & 0.292 & 1.312 \\
+Reference ViT Baseline                                     & 0.718 & 0.311 & 0.274 & 0.985 \\
+\midrule
+\textbf{Ours (Group 8, Greedy)}                            & 0.7225 & 0.2970 & 0.4831 & 0.9633 \\
+\textbf{Ours (Group 8, Beam $k=3$)}                        & 0.7238 & 0.3225 & \textbf{0.4897} & 1.0385 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Our model outperforms the classic CNN-LSTM baselines (Show \& Tell by +0.183 CIDEr; Show, Attend \& Tell by +0.178 CIDEr). Furthermore, it surpasses standard single-model ViT baselines (1.0385 vs. 0.9850 CIDEr). The Up-Down and $M^2$ models achieve higher CIDEr by employing heavy Faster R-CNN region proposal networks and reinforcement learning fine-tuning (SCST), which are orthogonal to our pure sequence-to-sequence attention objective. Noticeably, our model demonstrates exceptionally high METEOR scores ($\approx 0.490$ vs. $0.277$), primarily attributable to the WordPiece subword tokenizer which maps morphological variants to common roots.
+
+\section{Observations}
+\subsection{Key Strengths and Novelty}
+\begin{enumerate}
+    \item \textbf{Pure Attention Decoupling:} The architecture dispenses with recurrent units entirely, achieving parallelized training speeds of 11.1 ms per sample during inference.
+    \item \textbf{Native Attention Accessibility:} Unlike existing frameworks that monkey-patch PyTorch internals, our decoder directly returns cross-attention matrices during generation.
+    \item \textbf{Robust Regularization:} The combination of weight tying, label smoothing (0.1), and AMP prevents overfitting on the 118k image training split.
+\end{enumerate}
+
+\subsection{Limitations}
+\begin{enumerate}
+    \item \textbf{Frozen Visual Encoder:} Freezing ViT-B/16 prevents fine-grained visual adaptation to domain-specific COCO objects.
+    \item \textbf{Standard Maximum Likelihood Training:} The model is trained purely with cross-entropy teacher forcing, without reinforcement learning (SCST) optimization directly on CIDEr.
+\end{enumerate}
+
+\section{Conclusion and Future Work}
+\subsection{Conclusion}
+In this project, we designed, implemented, and empirically evaluated a Vision-Language image captioning system utilizing a Vision Transformer (ViT-B/16) visual encoder and a custom six-layer Transformer language decoder built from scratch. Evaluated on the benchmark MS COCO 2017 dataset, the architecture demonstrates strong convergence, dropping validation perplexity to 9.73 and achieving a competitive CIDEr score of 1.0385 and BLEU-4 of 0.3225 with beam search ($k=3$). The model exhibits explainable visual grounding through native cross-attention extraction, validating the efficacy of the all-attention paradigm for vision-language tasks.
+
+\subsection{Future Work}
+Promising directions for future exploration include:
+\begin{enumerate}
+    \item Partial fine-tuning of the final 2 ViT encoder blocks to adapt visual features directly to descriptive captioning tasks.
+    \item Implementing Self-Critical Sequence Training (SCST) using CIDEr as the reward signal to align token generation with consensus metrics.
+    \item Exploring larger visual foundation backbones, such as CLIP ViT-L/14, to capture richer multimodal semantic alignments.
+\end{enumerate}
+
+\section*{Code Availability}
+The complete source code, trained model configurations, Jupyter notebooks, visualization routines, and evaluation pipelines are publicly available on GitHub:
+\begin{center}
+\url{https://github.com/Waseem-Irfan-100/Visual-Language-image-captioning-using-Transformers.git}
+\end{center}
+
+\begin{thebibliography}{00}
+\bibitem{vinyals2015show} O. Vinyals, A. Toshev, S. Bengio, and D. Erhan, ``Show and tell: A neural image caption generator,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2015, pp. 3156--3164.
+\bibitem{xu2015show} K. Xu, J. Ba, R. Kiros, K. Cho, A. Courville, R. Salakhutdinov, R. Zemel, and Y. Bengio, ``Show, attend and tell: Neural image caption generation with visual attention,'' in \textit{Proc. Int. Conf. Mach. Learn. (ICML)}, 2015, pp. 2048--2057.
+\bibitem{anderson2018bottom} P. Anderson, X. He, C. Buehler, D. Teney, M. Johnson, S. Gould, and L. Zhang, ``Bottom-up and top-down attention for image captioning and visual question answering,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2018, pp. 6077--6086.
+\bibitem{vaswani2017attention} A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, ``Attention is all you need,'' in \textit{Adv. Neural Inf. Process. Syst. (NeurIPS)}, 2017, pp. 5998--6008.
+\bibitem{dosovitskiy2020image} A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner, M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, and N. Houlsby, ``An image is worth 16x16 words: Transformers for image recognition at scale,'' in \textit{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2021.
+\bibitem{li2019visualbert} L. H. Li, M. Yatskar, D. Yin, C.-J. Hsieh, and K.-W. Chang, ``VisualBERT: A simple and performant baseline for vision and language,'' \textit{arXiv preprint arXiv:1908.03557}, 2019.
+\bibitem{li2020oscar} X. Li, X. Yin, C. Li, P. Zhang, X. Hu, L. Zhang, L. Wang, H. Hu, L. Dong, F. Wei, Y. Choi, and J. Gao, ``Oscar: Object-semantics aligned pre-training for vision-language tasks,'' in \textit{Proc. Eur. Conf. Comput. Vis. (ECCV)}, 2020, pp. 121--137.
+\bibitem{cornia2020meshed} M. Cornia, M. Baraldi, G. Serra, and R. Cucchiara, ``Meshed-memory transformer for image captioning,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2020, pp. 10578--10587.
+\bibitem{lu2017knowing} J. Lu, C. Xiong, D. Parikh, and R. Socher, ``Knowing when to look: Adaptive attention via a visual sentinel for image captioning,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2017, pp. 375--383.
+\bibitem{lin2014microsoft} T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollar, and C. L. Zitnick, ``Microsoft COCO: Common objects in context,'' in \textit{Proc. Eur. Conf. Comput. Vis. (ECCV)}, 2014, pp. 740--755.
+\bibitem{vedantam2015cider} R. Vedantam, C. L. Zitnick, and D. Parikh, ``CIDEr: Consensus-based image description evaluation,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2015, pp. 4566--4575.
+\bibitem{papineni2002bleu} K. Papineni, S. Roukos, T. Ward, and W.-J. Zhu, ``BLEU: A method for automatic evaluation of machine translation,'' in \textit{Proc. Assoc. Comput. Linguistics (ACL)}, 2002, pp. 311--318.
+\bibitem{banerjee2005meteor} S. Banerjee and A. Lavie, ``METEOR: An automatic metric for MT evaluation with improved correlation with human judgments,'' in \textit{Proc. ACL Workshop Intrinsic Extrinsic Eval. Meas.}, 2005, pp. 65--72.
+\bibitem{lin2004rouge} C.-Y. Lin, ``ROUGE: A package for automatic evaluation of summaries,'' in \textit{Proc. ACL Workshop Text Summarization Branches Out}, 2004, pp. 74--81.
+\bibitem{loshchilov2017decoupled} I. Loshchilov and F. Hutter, ``Decoupled weight decay regularization,'' in \textit{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2019.
+\bibitem{devlin2018bert} J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova, ``BERT: Pre-training of deep bidirectional transformers for language understanding,'' in \textit{Proc. NAACL-HLT}, 2019, pp. 4171--4186.
+\bibitem{zellers2021merlot} R. Zellers, X. Lu, J. Hessel, Y. Yu, J. S. Park, J. Cao, A. Farhadi, and Y. Choi, ``MERLOT: Multimodal neural script knowledge models,'' in \textit{Adv. Neural Inf. Process. Syst. (NeurIPS)}, 2021, pp. 23634--23651.
+\bibitem{wang2022ofa} P. Wang, A. Yang, R. Men, J. Lin, S. Bai, Z. Li, J. Ma, C. Zhou, J. Zhou, and H. Yang, ``OFA: Unifying architectures, tasks, and modalities through a simple sequence-to-sequence learning framework,'' in \textit{Proc. Int. Conf. Mach. Learn. (ICML)}, 2022, pp. 23318--23340.
+\bibitem{child2019generating} R. Child, S. Gray, A. Radford, and I. Sutskever, ``Generating long sequences with sparse transformers,'' \textit{arXiv preprint arXiv:1904.10509}, 2019.
+\bibitem{carion2020end} N. Carion, F. Massa, G. Synnaeve, N. Usunier, A. Kirillov, and S. Zagoruyko, ``End-to-end object detection with transformers,'' in \textit{Proc. Eur. Conf. Comput. Vis. (ECCV)}, 2020, pp. 213--229.
+\bibitem{tan2019efficientnet} M. Tan and Q. Le, ``EfficientNet: Rethinking model scaling for convolutional neural networks,'' in \textit{Proc. Int. Conf. Mach. Learn. (ICML)}, 2019, pp. 6105--6114.
+\bibitem{he2016deep} K. He, X. Zhang, S. Ren, and J. Sun, ``Deep residual learning for image recognition,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2016, pp. 770--778.
+\bibitem{hu2018squeeze} J. Hu, L. Shen, and G. Sun, ``Squeeze-and-excitation networks,'' in \textit{Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2018, pp. 7132--7141.
+\end{thebibliography}
+
+\end{document}
