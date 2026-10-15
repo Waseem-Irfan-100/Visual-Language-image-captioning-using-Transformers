@@ -138,22 +138,18 @@ By extracting and reshaping the $196$ spatial token attention weights into a $14
 
 ```
 Visual-Language-image-captioning-using-Transformers/
-├── Group8_ImageCaptioning_Report_Revised.docx # Formal academic paper report (Word)
-├── main.tex                                  # IEEE two-column paper source (LaTeX)
-├── Overleaf_Group8_ImageCaptioning.zip       # Complete Overleaf-ready project package
-├── MASTER_PROMPT.md                           # Single-source-of-truth project specification
-├── README.md                                  # Comprehensive documentation & results
-├── build_notebook.py                          # Automated builder assembling modular python into notebook
-├── config.py                                  # Central configuration & hyperparameters
-├── dataset.py                                 # MS COCO PyTorch Dataset & DataLoader pipeline
-├── evaluate.py                                # Evaluation suite (BLEU-1..4, METEOR, ROUGE-L, CIDEr)
-├── figures/                                   # Model architecture and experimental visualization figures
-├── generate_report.py                         # Script generating the formal report
-├── image_captioning_kaggle.ipynb              # Clean ready-to-run Kaggle notebook
-├── inference.py                               # Standalone inference & beam search routines
-├── model.py                                   # ViT Encoder, Bridge, and Scratch Pre-LN Transformer Decoder
-├── notebook4be3309021.ipynb                   # Fully executed Kaggle notebook with outputs & visualizations
-└── train.py                                   # Modular training loop with AMP & cosine annealing
+├── group8_report.pdf                  # Official compiled IEEE two-column conference report (PDF)
+├── main.tex                           # IEEE two-column paper source (LaTeX)
+├── figures/                           # Model architecture and experimental visualization figures
+├── README.md                          # Comprehensive documentation & results
+├── config.py                          # Central configuration & hyperparameters
+├── dataset.py                         # MS COCO PyTorch Dataset & DataLoader pipeline
+├── evaluate.py                        # Evaluation suite (BLEU-1..4, METEOR, ROUGE-L, CIDEr)
+├── image_captioning_kaggle.ipynb      # Clean ready-to-run Kaggle notebook
+├── inference.py                       # Standalone inference & beam search routines
+├── model.py                           # ViT Encoder, Bridge, and Scratch Pre-LN Transformer Decoder
+├── notebook4be3309021.ipynb           # Fully executed Kaggle notebook with outputs & visualizations
+└── train.py                           # Modular training loop with AMP & cosine annealing
 ```
 
 ---
@@ -180,7 +176,7 @@ Visual-Language-image-captioning-using-Transformers/
 
 2. **Install dependencies:**
    ```bash
-   pip install torch torchvision transformers pycocotools nltk rouge-score pycocoevalcap python-docx
+   pip install torch torchvision transformers pycocotools nltk rouge-score pycocoevalcap
    ```
 
 3. **Run Training:**
@@ -197,8 +193,9 @@ Visual-Language-image-captioning-using-Transformers/
 
 ## Academic Report
 
-A complete IEEE-formatted research report has been prepared:
-- **Document:** [`Group8_ImageCaptioning_Report_Revised.docx`](Group8_ImageCaptioning_Report_Revised.docx) (Word) and [`main.tex`](main.tex) (IEEE LaTeX)
+A complete IEEE-formatted research report is available in the repository:
+- **PDF Report:** [`group8_report.pdf`](group8_report.pdf) (Official compiled IEEE two-column conference paper)
+- **LaTeX Source:** [`main.tex`](main.tex) (Complete IEEEtran LaTeX source code)
 - **Sections:** Abstract, Literature Review, Methodology, System Architecture, Results & Discussions, Visualizations, Performance Comparison, Observations, and 23 IEEE References.
 
 ---
